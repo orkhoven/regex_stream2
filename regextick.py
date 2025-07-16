@@ -29,50 +29,39 @@ if uploaded_file:
 
     st.markdown("### Répondez aux questions Regex (manuellement) :")
 
-    num_words = st.text_input("Nombre de mots dans le texte :", "")
-    punctuation_count = st.text_input("Nombre de signes de ponctuation :", "")
-    num_years = st.text_input("Nombre d’années (ex: 1999, 2024) :", "")
-    num_emails = st.text_input("Nombre d’adresses e-mail :", "")
-    num_proper_names = st.text_input("Nombre de noms propres (Prénom Nom) :", "")
-    num_long_words = st.text_input("Nombre de mots de plus de 6 lettres :", "")
-    life_count = st.text_input("Nombre d’occurrences du mot « life » (insensible à la casse) :", "")
-    num_inner_quotes = st.text_input("Nombre de guillemets dans des guillemets :", "")
-    num_lowercase_words = st.text_input("Nombre de mots en minuscules uniquement :", "")
-    num_number_words = st.text_input("Nombres en toutes lettres (un à dix) :", "")
-    num_ing_verbs = st.text_input("Nombre de mots finissant par -ing :", "")
-    num_emotions = st.text_input("Nombre de mots exprimant des émotions (love, hate, fear, hope, joy, sadness) :", "")
-    num_negations = st.text_input("Nombre de négations (not, never, no) :", "")
-    num_repeated_words = st.text_input("Nombre de mots répétés consécutivement (exemple : very very) :", "")
-    avg_word_length = st.text_input("Longueur moyenne des mots (arrondie à 2 décimales) :", "")
+    # Fonction de feedback avec tick/cross
+    def input_with_feedback(label, correct_answer, multiple_answers=False):
+        user_input = st.text_input(label, key=label)
+        feedback = ""
+        if user_input:
+            if multiple_answers:
+                if user_input.strip() in [str(ans).strip() for ans in correct_answer]:
+                    feedback = "✅"
+                else:
+                    feedback = "❌"
+            else:
+                if user_input.strip() == str(correct_answer):
+                    feedback = "✅"
+                else:
+                    feedback = "❌"
+        st.markdown(feedback)
+        return user_input
 
-    if st.button("Télécharger mes réponses en CSV"):
-        data = {
-            "Tâche Regex": [
-                "Nombre de mots",
-                "Nombre de signes de ponctuation",
-                "Nombre d’années",
-                "Nombre d’adresses e-mail",
-                "Nombre de noms propres (Prénom Nom)",
-                "Nombre de mots de plus de 6 lettres",
-                "Nombre d’occurrences du mot « life »",
-                "Nombre de guillemets dans des guillemets",
-                "Nombre de mots en minuscules uniquement",
-                "Nombres en toutes lettres (un à dix)",
-                "Nombre de mots finissant par -ing",
-                "Nombre de mots exprimant des émotions",
-                "Nombre de négations",
-                "Nombre de mots répétés consécutivement",
-                "Longueur moyenne des mots"
-            ],
-            "Réponse": [
-                num_words, punctuation_count, num_years, num_emails, num_proper_names, num_long_words,
-                life_count, num_inner_quotes, num_lowercase_words, num_number_words, num_ing_verbs,
-                num_emotions, num_negations, num_repeated_words, avg_word_length
-            ]
-        }
-        result_df = pd.DataFrame(data)
-        csv = result_df.to_csv(index=False).encode('utf-8')
-        st.download_button("Télécharger le fichier CSV", csv, "reponses_regex.csv", "text/csv")
+    num_words = input_with_feedback("Nombre de mots dans le texte :", len(re.findall(r"\\b\\w+\\b", text)))
+    punctuation_count = input_with_feedback("Nombre de signes de ponctuation :", len(re.findall(r"[^\\w\\s]", text)))
+    num_years = input_with_feedback("Nombre d’années (ex: 1999, 2024) :", len(re.findall(r"\\b\\d{4}\\b", text)))
+    num_emails = input_with_feedback("Nombre d’adresses e-mail :", len(re.findall(r"[\\w.-]+@[\\w.-]+", text)))
+    num_proper_names = input_with_feedback("Nombre de noms propres (Prénom Nom) :", "?")
+    num_long_words = input_with_feedback("Nombre de mots de plus de 6 lettres :", len(re.findall(r"\\b\\w{7,}\\b", text)))
+    life_count = input_with_feedback("Nombre d’occurrences du mot « life » (insensible à la casse) :", len(re.findall(r"life", text, re.IGNORECASE)))
+    num_inner_quotes = input_with_feedback("Nombre de guillemets dans des guillemets :", len(re.findall(r'“.*?["\'].*?["\'].*?”', text)))
+    num_lowercase_words = input_with_feedback("Nombre de mots en minuscules uniquement :", len(re.findall(r"\\b[a-z]+\\b", text)))
+    num_number_words = input_with_feedback("Nombres en toutes lettres (un à dix) :", len(re.findall(r"\\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\\b", text, re.IGNORECASE)))
+    num_ing_verbs = input_with_feedback("Nombre de mots finissant par -ing :", len(re.findall(r"\\b\\w+ing\\b", text)))
+    num_emotions = input_with_feedback("Nombre de mots exprimant des émotions (love, hate, fear, hope, joy, sadness) :", len(re.findall(r"\\b(love|hate|fear|hope|joy|sadness)\\b", text, re.IGNORECASE)))
+    num_negations = input_with_feedback("Nombre de négations (not, never, no) :", len(re.findall(r"\\b(not|never|no)\\b", text)))
+    num_repeated_words = input_with_feedback("Nombre de mots répétés consécutivement (exemple : very very) :", len(re.findall(r"\\b(\\w+) \\1\\b", text, re.IGNORECASE)))
+    avg_word_length = input_with_feedback("Longueur moyenne des mots (arrondie à 2 décimales) :", round(sum(len(w) for w in re.findall(r"\\b\\w+\\b", text)) / len(re.findall(r"\\b\\w+\\b", text)), 2))
 
     st.markdown("---")
     st.markdown("### Envoyer vos réponses par email")
@@ -117,10 +106,10 @@ if uploaded_file:
             msg['To'] = teacher_email
             msg.set_content(f"Voici les réponses de l'étudiant ({email_address}) :\n\n{csv_content}")
 
-            # Configuration SMTP Gmail
+            # Configuration SMTP Yahoo
             smtp_server = "smtp.mail.yahoo.com"
             smtp_port = 587
-            smtp_user = "selcuk_orkun@yahoo.com"  # Votre compte Gmail expéditeur
+            smtp_user = "selcuk_orkun@yahoo.com"  # Votre compte Yahoo expéditeur
             smtp_password = "gervfabqarlxhgpg"   # App Password
 
             with smtplib.SMTP(smtp_server, smtp_port) as server:
